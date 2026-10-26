@@ -280,3 +280,21 @@ One section per problem: the problem number and title, at least one prompt I typ
 ### Prompt I typed
 
 > ok this is problem 11: push the code to a public github repository so graders can clone it. give me the repo url for me to submit to canvas, and also put it in output/github_url.txt. do not push real .env to the github repo. do include both database files under data/ (the original and working copy) so graders can run the app easily.
+
+### Follow-up prompts
+
+> here is the expected file layout: (screenshot of the hw5/ tree: AI_prompts.md, requirements.txt, .env.example, .gitignore, .mcp.json, README.md, data/ with both .db files, mcp_server/ with server.py and README.md, frontend/, backend/ with main.py, models.py and prompts/*.md, and output/ with harness.md, mcp_smoke.json, desk_tickets.html, design.md, resolved_tickets.json, resolved_board.html, audit_trail.json and github_url.txt) "README should explain: copy original DB to the working copy when you need a clean run, start MCP server, start FastAPI backend, start the React board, reset the DB before a full three-ticket run."
+
+### What was built (evidence)
+
+- **Public repo: https://github.com/egwright336/campus-customs-ops** (`gh repo view` reports `PUBLIC`). The URL is also in `output/github_url.txt`.
+- New root `README.md`: setup; `python reset_db.py` to copy the original DB to the working copy; starting the MCP server (stdio or `--http`); starting FastAPI with `uvicorn main:app --port 9000`; `npm run dev` for the board; resetting before a full 101 → 102 → 103 run; the shop rules.
+- Every file in the expected layout is present, along with the supporting code (`config.py`, `reset_db.py`, `backend/team.py`, `audit.py`, `run.py`, `scripts/`, `output/run9/`, `output/screenshots/`).
+- **No secrets:**
+  - `.gitignore` excludes `.env` and `.env.*` (but keeps `.env.example`), `.venv`, `node_modules`, `dist` and `*.log`.
+  - The real key lives two folders up, outside the repo.
+  - A scan of every file for the actual key value found 0 matches.
+  - `git ls-files` contains no `.env`, logs or virtualenv.
+- **Both databases committed:** `data/campus_customs.db` (original, checking $3,400) and `data/campus_customs_new.db` (working copy, at the end of the graded run: $20).
+- `.mcp.json` now uses relative paths (`.venv/bin/python mcp_server/server.py`), so it works in a grader's clone.
+- **Verified:** a fresh `git clone` into a scratch folder has 81 tracked files, and the layout and both databases are as expected.
