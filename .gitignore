@@ -1,0 +1,16 @@
+# secrets: never commit the real key (copy .env.example to .env)
+.env
+.env.*
+!.env.example
+
+# local environments and build output
+.venv
+.venv.nosync/
+__pycache__/
+node_modules/
+dist/
+*.tsbuildinfo
+
+# local logs and OS files
+*.log
+.DS_Store
