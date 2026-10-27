@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api, API_URL } from './api'
 import { AGENT_ORDER, AGENTS, TICKET_KIND } from './agents'
-import type { AgentEvent, Board, Cash, Run, Ticket, TicketSummary } from './types'
+import type { AgentEvent, Board, Cash, Run, RunInfo, Ticket, TicketSummary } from './types'
 import Crest from './components/Crest'
 import NightSky from './components/NightSky'
 import Ledger from './components/Ledger'
@@ -14,10 +14,10 @@ import Letters from './components/Letters'
 
 const POLL_MS = 1200
 
-/** Only the events from the ticket's most recent run (the audit trail keeps every run, forever). */
-function latestRun(events: AgentEvent[]): AgentEvent[] {
-  const last = [...events].reverse().find((e) => e.event === 'ticket_start')
-  return last ? events.filter((e) => e.run_id === last.run_id) : events
+/** The events of one run (default: the most recent); the audit trail keeps every run, forever. */
+function pickRun(events: AgentEvent[], runId?: string | null): AgentEvent[] {
+  const id = runId ?? [...events].reverse().find((e) => e.event === 'ticket_start')?.run_id
+  return id ? events.filter((e) => e.run_id === id) : events
 }
 
 export default function App() {
@@ -28,6 +28,8 @@ export default function App() {
   const [selected, setSelected] = useState<number | null>(null)
   const [events, setEvents] = useState<AgentEvent[]>([])
   const [summary, setSummary] = useState<TicketSummary | null>(null)
+  const [runs, setRuns] = useState<RunInfo[]>([])
+  const [viewRun, setViewRun] = useState<string | null>(null)
   const [run, setRun] = useState<Run | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [offline, setOffline] = useState(false)
@@ -52,23 +54,27 @@ export default function App() {
     refreshDesk()
   }, [refreshDesk])
 
-  // Picking a ticket shows its most recent telling (if it has one) and its summary.
-  const openTicket = useCallback(async (id: number) => {
+  // Picking a ticket shows one of its runs (the most recent unless runId is given) and that run's summary.
+  const openTicket = useCallback(async (id: number, runId?: string | null) => {
     setSelected(id)
     setError(null)
     try {
-      const [ev, sm] = await Promise.all([api.events(0, id), api.summary(id)])
-      setEvents(latestRun(ev.events))
-      setSummary(sm)
+      const [ev, rs] = await Promise.all([api.events(0, id), api.runs(id)])
+      const chosen = runId ?? rs.runs.at(-1)?.run_id ?? null
+      setRuns(rs.runs)
+      setViewRun(chosen)
+      setEvents(pickRun(ev.events, chosen))
+      setSummary(await api.summary(id, chosen ?? undefined))
     } catch (e) {
       setError((e as Error).message)
     }
   }, [])
 
-  // Deep link: /?ticket=101 opens that ticket (used for the resolved-board screenshots).
+  // Deep link: /?ticket=101 opens that ticket; add &run=<run_id> for an earlier run (used for screenshots).
   useEffect(() => {
-    const id = Number(new URLSearchParams(window.location.search).get('ticket'))
-    if (id) openTicket(id)
+    const q = new URLSearchParams(window.location.search)
+    const id = Number(q.get('ticket'))
+    if (id) openTicket(id, q.get('run'))
   }, [openTicket])
 
   const startRun = async () => {
@@ -84,6 +90,7 @@ export default function App() {
       since.current = r.events_from
       setEvents([])
       setSummary(null)
+      setViewRun(null)
       setRun(r)
     } catch (e) {
       setError((e as Error).message)
@@ -106,6 +113,10 @@ export default function App() {
           const [last, sm] = await Promise.all([api.events(since.current, run.ticket_id), api.summary(run.ticket_id)])
           if (last.events.length) setEvents((prev) => [...prev, ...last.events])
           setSummary(sm)
+          api.runs(run.ticket_id).then((rs) => {
+            setRuns(rs.runs)
+            setViewRun(rs.runs.at(-1)?.run_id ?? null)
+          })
           refreshDesk()
         }
       } catch {
@@ -228,6 +239,23 @@ export default function App() {
                   </button>
                 </div>
               </div>
+              {runs.length > 1 && !(running && runForThis) && (
+                <nav className="run-picker" aria-label="Runs of this ticket">
+                  <span className="run-picker-label">Runs of this ticket</span>
+                  {runs.map((r, i) => (
+                    <button
+                      key={r.run_id}
+                      className={r.run_id === viewRun ? 'on' : ''}
+                      aria-pressed={r.run_id === viewRun}
+                      onClick={() => openTicket(ticket.id, r.run_id)}
+                      title={r.decision ?? ''}
+                    >
+                      Run {i + 1} · {r.started?.slice(11, 16)} · {r.agent_runs} agents ·{' '}
+                      {Math.round((r.tokens_used ?? 0) / 1000)}k tokens{i === runs.length - 1 ? ' · latest' : ''}
+                    </button>
+                  ))}
+                </nav>
+              )}
               {ticket.pending_approvals > 0 && !running && (
                 <p className="await-note">
                   {ticket.pending_approvals} request{ticket.pending_approvals > 1 ? 's' : ''} on this ticket await your

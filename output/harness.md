@@ -97,6 +97,7 @@ are missing (a reset restores the original database; the server recreates them).
 - Duplicate requests for the same bill are refused; restocks are refused while the vendor has an unpaid invoice
   that has no payment requested; discounts below unit cost are refused.
 - Every executed payment writes a `payments` row with who approved it, and updates the invoice, lease and cash.
+- These rules are covered by 17 offline tests in `tests/test_safety.py` (`python -m pytest tests/`; no API key or tokens needed).
 
 **Customers and the outside world**
 - Nothing is ever sent: customer, landlord and vendor messages are drafts on the board for a person to review.
@@ -140,7 +141,8 @@ All shop reads and writes go through the MCP server; the backend never edits sho
 - `POST /api/tickets/{ticket_id}/run` — starts the agent team on that ticket in the background; returns a `run_key` (refuses a second run while one is in progress). When the run finishes, the boss marks the ticket `resolved` via `update_ticket_status`, noting how many approvals still wait for a human; resolving never moves money.
 - `GET  /api/runs/{run_key}` — status of that run (queued / running / done / error) and the boss's final decision.
 - `GET  /api/events?since=N&ticket_id=` — recent agent events from `output/audit_trail.json`: who acted, what they said, which tools they called; poll with `since=next_since` so the board refreshes.
-- `GET  /api/tickets/{ticket_id}/summary` — what each agent did on the ticket's latest run (summary, status, who called it, whom it asked, MCP tools used) plus the boss's ruling, built from the audit trail.
+- `GET  /api/tickets/{ticket_id}/runs` — every finished run of the ticket in the audit trail (the board's run picker).
+- `GET  /api/tickets/{ticket_id}/summary?run_id=` — what each agent did on one run (default: the latest) (summary, status, who called it, whom it asked, MCP tools used) plus the boss's ruling, built from the audit trail.
 - `GET  /api/board` — everything waiting for a human: approval requests and message drafts (drafts are never sent).
 - `POST /api/approvals/{request_id}/approve` — a named human approves; records the decision and executes it (the only route that changes cash; agent names are refused; refuses if cash would go negative).
 - `POST /api/approvals/{request_id}/reject` — a named human rejects a pending request.
@@ -167,7 +169,7 @@ design write-up is in `output/design.md`.
 | **Unsent letters** | Drafts the team wrote. They are never sent | `GET /api/board` |
 | **Reset the books** | Restores the working DB from the original (with a confirm step) | `POST /api/reset` |
 
-`/?ticket=101` opens a ticket directly. The screenshots in `output/resolved_board.html` were taken that way.
+A **run picker** under the ticket header switches between every run of that ticket (`GET /api/tickets/{id}/runs`), so a re-run never hides the main run. `/?ticket=101` opens a ticket directly, and `&run=<run_id>` opens a specific run. The screenshots in `output/resolved_board.html` were taken that way.
 
 ## 8. The full run (Problem 9): what exercised the whole harness
 

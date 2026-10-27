@@ -1392,3 +1392,35 @@ details[open].said summary {
   font-family: var(--fell);
   font-style: italic;
 }
+
+.run-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.run-picker-label {
+  margin-right: 0.3rem;
+  font-family: var(--stamp);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--moon-text);
+}
+
+.run-picker button {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid rgb(201 162 74 / 0.4);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--moon-text);
+  font-family: var(--type);
+  font-size: 0.75rem;
+}
+
+.run-picker button.on {
+  border-color: var(--brass);
+  background: rgb(201 162 74 / 0.15);
+  color: var(--parchment);
+}

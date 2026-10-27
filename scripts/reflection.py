@@ -72,7 +72,7 @@ another 102k.</p>
 <ul>
 <li>We predicted "no new PO because invoice 501 <i>is</i> the reprint", and we were right about the data. The agents weren't: they added the $8 PO.</li>
 <li>We predicted ~4 agent runs; there were 5, because accounting was asked twice.</li>
-<li>Lesson: <b>a fact sitting in a description column is invisible to an agent unless a tool surfaces it.</b> <code>check_vendor_can_ship</code> returns the blocking invoice's amount and due date, not what it is <i>for</i>.</li>
+<li>Lesson: <b>showing an agent a fact is not the same as enforcing it.</b> <code>check_vendor_can_ship</code> returned the invoice's description, "Rush reprint CC-TEE-WHITE S", straight to inventory, and inventory still ordered the tee. The rule belongs in the PO tool, not in the hope that the model connects the dots.</li>
 </ul></td></tr>
 <tr><td>102</td><td>
 <ul>
@@ -111,9 +111,9 @@ another 102k.</p>
 including <code>get_ticket</code> 3×, <code>check_rent_due</code> 2× and <code>get_cash_position</code> 2×, plus three model
 contexts at 28.9k tokens. Rent is one lease, one amount, one date. There is nothing to delegate.</p>
 <p><b>Ticket 101, mostly.</b> One agent holding inventory, accounting and draft tools would need about 7 calls instead of 16. It
-also might have <i>avoided the $8 duplicate PO</i>. In the team, the boss read the ticket (which links invoice 501),
-but inventory got a paraphrase. A single context would have held "invoice 501 = rush reprint of this exact tee" and
-"we need 1 tee" side by side.</p>
+would <i>not</i> necessarily have avoided the $8 duplicate PO, though. Inventory had the invoice description ("Rush
+reprint CC-TEE-WHITE S") in its own tool result and ordered anyway. That was a reasoning miss, not a hand-off
+problem, so a single agent could make it too.</p>
 <p><b>The 103 re-run is the clearest case for one context.</b> The refusal ("max 6 units") landed in inventory's
 context. Inventory handed accounting a summary, accounting misread the stock, and the boss then asked for "another" PO without
 the full history. That's three partial views of one decision. A single agent that just got refused is far more likely to
@@ -193,7 +193,7 @@ a ticket crosses domains (stock + price + a customer letter).</p>
 
 <h3>What I'd change first</h3>
 <ul>
-<li><b>Surface what an open invoice is for.</b> Have <code>check_vendor_can_ship</code> return <code>description</code> and refuse a PO for a SKU an open invoice already covers. That fixes 101's $8.</li>
+<li><b>Enforce what an open invoice is for.</b> <code>check_vendor_can_ship</code> already returns the description; <code>request_purchase_order_approval</code> should refuse a PO for a SKU and size that an open or just-paid invoice already covers. That fixes 101's $8.</li>
 <li><b>Refuse PO-splitting.</b> After a <code>request_purchase_order_approval</code> refusal on a ticket and SKU, refuse further POs for that pair unless a human asks. That fixes 103's re-run.</li>
 <li><b>Reserve rent.</b> Make <code>get_cash_position</code>'s "available" subtract rent due within 30 days, so a hoodie order can't eat October's lease.</li>
 </ul>

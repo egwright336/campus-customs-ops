@@ -73,7 +73,7 @@ th,td{border:1px solid #dde3ec;padding:6px 9px;text-align:left;vertical-align:to
   <p>Cash out because of this ticket: <b>$848.00</b>. See the Cash tab for the running balance.</p>
   <h4>Actual outcome</h4><p>Resolved. Two requests on the board: <b>#1 pay invoice 501, $840</b> (accounting) and <b>#2 purchase order 1 × CC-TEE-WHITE S, $8</b> (inventory). One unsent draft to Tauhid Zaman says size S is out, the restock is awaiting approval with no date, and M/L/XL are in stock. Eliza Wright signed both at 18:08: checking went from $3,400 to $2,552, and invoice 501 is now <i>paid</i>, so Bulldog Print Co can ship again. Note that the $8 tee PO duplicates the reprint invoice 501 already covers.</p>
   <h4>Prediction results</h4><p class='muted'>Marked ✓ / ✗ / ~ (partly) in the Expected checklist above, with evidence.</p>
-  <h4>Differences from the plan, and why</h4><ul><li><b>An $8 purchase order we did not predict, and it was a mistake.</b> Our plan said invoice 501 <i>is</i> the tee reprint, and the data agrees: <code>invoices.description</code> reads "Rush reprint CC-TEE-WHITE S". Inventory treated the invoice only as an old debt blocking Bulldog, never connected the description to the missing shirt, and ordered 1 more tee on top of the reprint already paid for. Cheap ($8), but a duplicate order. The PO tool allowed it because invoice 501 was already requested (the shop rule only blocks POs while an unpaid invoice is <i>un</i>requested), and no tool checks whether an open invoice already covers the SKU.</li><li><b>5 agent runs, not 4: accounting was asked twice.</b> First by inventory (put invoice 501 up), then by the boss ("do not create duplicates… check cash/competing commitments"). The second call earned its keep: accounting called check_rent_due and warned that the invoice, the PO and the $2,400 rent together would leave $152. That is exactly where the shop ended up after ticket 102.</li><li>Customer service re-ran get_ticket and check_stock_and_margin before drafting. It was redundant but safe, and it is why the draft lists M, L and XL correctly.</li></ul>
+  <h4>Differences from the plan, and why</h4><ul><li><b>An $8 purchase order we did not predict, and it was a mistake.</b> Our plan said invoice 501 <i>is</i> the tee reprint, and the data agrees: <code>invoices.description</code> reads "Rush reprint CC-TEE-WHITE S". check_vendor_can_ship even handed inventory that description, yet inventory treated the invoice only as an old debt blocking Bulldog and ordered 1 more tee on top of the reprint already paid for. Cheap ($8), but a duplicate order. The PO tool allowed it because invoice 501 was already requested (the shop rule only blocks POs while an unpaid invoice is <i>un</i>requested), and no tool checks whether an open invoice already covers the SKU.</li><li><b>5 agent runs, not 4: accounting was asked twice.</b> First by inventory (put invoice 501 up), then by the boss ("do not create duplicates… check cash/competing commitments"). The second call earned its keep: accounting called check_rent_due and warned that the invoice, the PO and the $2,400 rent together would leave $152. That is exactly where the shop ended up after ticket 102.</li><li>Customer service re-ran get_ticket and check_stock_and_margin before drafting. It was redundant but safe, and it is why the draft lists M, L and XL correctly.</li></ul>
  </div>
 </section>
 
@@ -274,7 +274,7 @@ another 102k.</p>
 <ul>
 <li>We predicted "no new PO because invoice 501 <i>is</i> the reprint", and we were right about the data. The agents weren't: they added the $8 PO.</li>
 <li>We predicted ~4 agent runs; there were 5, because accounting was asked twice.</li>
-<li>Lesson: <b>a fact sitting in a description column is invisible to an agent unless a tool surfaces it.</b> <code>check_vendor_can_ship</code> returns the blocking invoice's amount and due date, not what it is <i>for</i>.</li>
+<li>Lesson: <b>showing an agent a fact is not the same as enforcing it.</b> <code>check_vendor_can_ship</code> returned the invoice's description, "Rush reprint CC-TEE-WHITE S", straight to inventory, and inventory still ordered the tee. The rule belongs in the PO tool, not in the hope that the model connects the dots.</li>
 </ul></td></tr>
 <tr><td>102</td><td>
 <ul>
@@ -313,9 +313,9 @@ another 102k.</p>
 including <code>get_ticket</code> 3×, <code>check_rent_due</code> 2× and <code>get_cash_position</code> 2×, plus three model
 contexts at 28.9k tokens. Rent is one lease, one amount, one date. There is nothing to delegate.</p>
 <p><b>Ticket 101, mostly.</b> One agent holding inventory, accounting and draft tools would need about 7 calls instead of 16. It
-also might have <i>avoided the $8 duplicate PO</i>. In the team, the boss read the ticket (which links invoice 501),
-but inventory got a paraphrase. A single context would have held "invoice 501 = rush reprint of this exact tee" and
-"we need 1 tee" side by side.</p>
+would <i>not</i> necessarily have avoided the $8 duplicate PO, though. Inventory had the invoice description ("Rush
+reprint CC-TEE-WHITE S") in its own tool result and ordered anyway. That was a reasoning miss, not a hand-off
+problem, so a single agent could make it too.</p>
 <p><b>The 103 re-run is the clearest case for one context.</b> The refusal ("max 6 units") landed in inventory's
 context. Inventory handed accounting a summary, accounting misread the stock, and the boss then asked for "another" PO without
 the full history. That's three partial views of one decision. A single agent that just got refused is far more likely to
@@ -395,7 +395,7 @@ a ticket crosses domains (stock + price + a customer letter).</p>
 
 <h3>What I'd change first</h3>
 <ul>
-<li><b>Surface what an open invoice is for.</b> Have <code>check_vendor_can_ship</code> return <code>description</code> and refuse a PO for a SKU an open invoice already covers. That fixes 101's $8.</li>
+<li><b>Enforce what an open invoice is for.</b> <code>check_vendor_can_ship</code> already returns the description; <code>request_purchase_order_approval</code> should refuse a PO for a SKU and size that an open or just-paid invoice already covers. That fixes 101's $8.</li>
 <li><b>Refuse PO-splitting.</b> After a <code>request_purchase_order_approval</code> refusal on a ticket and SKU, refuse further POs for that pair unless a human asks. That fixes 103's re-run.</li>
 <li><b>Reserve rent.</b> Make <code>get_cash_position</code>'s "available" subtract rent due within 30 days, so a hoodie order can't eat October's lease.</li>
 </ul>

@@ -1,4 +1,4 @@
-import type { AgentEvent, Board, Cash, Run, Ticket, TicketSummary } from './types'
+import type { AgentEvent, Board, Cash, Run, RunInfo, Ticket, TicketSummary } from './types'
 
 /** The FastAPI backend (backend/main.py). Override with VITE_API_URL if it moves. */
 export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:9000'
@@ -26,7 +26,9 @@ export const api = {
   runStatus: (runKey: string) => call<Run>(`/api/runs/${runKey}`),
   events: (since: number, ticketId: number) =>
     call<{ events: AgentEvent[]; next_since: number }>(`/api/events?since=${since}&ticket_id=${ticketId}&limit=500`),
-  summary: (ticketId: number) => call<TicketSummary>(`/api/tickets/${ticketId}/summary`),
+  summary: (ticketId: number, runId?: string) =>
+    call<TicketSummary>(`/api/tickets/${ticketId}/summary${runId ? `?run_id=${runId}` : ''}`),
+  runs: (ticketId: number) => call<{ runs: RunInfo[] }>(`/api/tickets/${ticketId}/runs`),
   board: () => call<Board>('/api/board'),
   cash: () => call<Cash>('/api/cash'),
   approve: (id: number, approver: string, note = '') =>

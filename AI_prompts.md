@@ -298,3 +298,13 @@ One section per problem: the problem number and title, at least one prompt I typ
 - **Both databases committed:** `data/campus_customs.db` (original, checking $3,400) and `data/campus_customs_new.db` (working copy, at the end of the graded run: $20).
 - `.mcp.json` now uses relative paths (`.venv/bin/python mcp_server/server.py`), so it works in a grader's clone.
 - **Verified:** a fresh `git clone` into a scratch folder has 81 tracked files, and the layout and both databases are as expected.
+
+## Polish after Problem 11 — Making the repo grader-proof
+
+### Prompt I typed
+
+> how else can we improve this?
+
+### Follow-up prompts
+
+> let's do them up to 7

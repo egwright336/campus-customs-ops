@@ -43,8 +43,8 @@ DIFFERENCES = {
     101: [
         "<b>An $8 purchase order we did not predict, and it was a mistake.</b> Our plan said invoice 501 <i>is</i> the "
         "tee reprint, and the data agrees: <code>invoices.description</code> reads \"Rush reprint CC-TEE-WHITE S\". "
-        "Inventory treated the invoice only as an old debt blocking Bulldog, never connected the description to the "
-        "missing shirt, and ordered 1 more tee on top of the reprint already paid for. Cheap ($8), but a duplicate "
+        "check_vendor_can_ship even handed inventory that description, yet inventory treated the invoice only as an old "
+        "debt blocking Bulldog and ordered 1 more tee on top of the reprint already paid for. Cheap ($8), but a duplicate "
         "order. The PO tool allowed it because invoice 501 was already requested (the shop rule only blocks POs while "
         "an unpaid invoice is <i>un</i>requested), and no tool checks whether an open invoice already covers the SKU.",
         "<b>5 agent runs, not 4: accounting was asked twice.</b> First by inventory (put invoice 501 up), then by "

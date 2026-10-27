@@ -4,6 +4,8 @@ Five AI agents (**boss, inventory, accounting, facilities, customer service**) w
 an **MCP server**. A **FastAPI** backend runs the team, and a **React** dashboard (the Night Desk) lets you watch the
 agents live and sign payments. Every agent uses **gpt-6-luna through Portkey** and nothing else.
 
+![The Night Desk dashboard showing ticket 103 after the graded run](output/screenshots/night_desk.png)
+
 ```
 data/campus_customs.db       original database (read-only, never edited)
 data/campus_customs_new.db   working copy (everything reads/writes this one)
@@ -79,6 +81,25 @@ right; the checking balance drops after each signed payment.
 
 You can also run it from the command line with no dashboard: `python -m backend.run --all --reset`. This leaves
 every request pending.
+
+## Tests (offline, no API key, no tokens)
+
+```bash
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/python -m pytest tests/ -q
+```
+
+There are 17 tests on temporary copies of the original database. They check that:
+- agents can't approve;
+- payments need a human;
+- no balance goes negative;
+- duplicate requests are refused;
+- a vendor with an unpaid invoice is blocked;
+- prices below cost are refused;
+- only the boss resolves a ticket;
+- "today" comes from `desk.date_today`;
+- no agent gets the human-only tools;
+- the model is `gpt-6-luna`.
 
 ## Shop rules the code enforces
 

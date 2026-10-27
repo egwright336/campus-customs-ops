@@ -9,7 +9,16 @@
   `data/campus_customs.db` is read-only; `python reset_db.py` restores the working copy.
 - The MCP server is `mcp_server/server.py` (`campus-customs-ops`, connected via `.mcp.json`).
 
-## Problem 4 in progress: MCP smoke test
+## Where things stand (Problems 1–11 done)
+- Backend: `cd backend && ../.venv/bin/uvicorn main:app --port 9000` (no `--reload`: iCloud Desktop restarts it).
+- Board: `cd frontend && npm run dev` → http://localhost:5173.
+- Graded full run is documented in `output/desk_tickets.html`, `output/resolved_tickets.json` and
+  `output/resolved_board.html`. Don't re-run tickets against the committed working DB without
+  resetting first (`python reset_db.py`).
+- Offline safety tests: `.venv/bin/python -m pytest tests/` (no API key and no tokens needed).
+- Public repo: https://github.com/egwright336/campus-customs-ops (never commit `.env`).
+
+## MCP smoke test (Problem 4, done; keep this format if more tools are tested)
 When the student asks you to test a tool, call it through the `campus-customs-ops` MCP connection (not by
 running Python), then append an entry to `output/mcp_smoke.json` with this shape:
 

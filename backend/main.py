@@ -176,11 +176,24 @@ async def events(since: int = 0, ticket_id: int | None = None, limit: int = 200)
     return {"events": out[-limit:], "next_since": len(data), "total": len(data)}
 
 
-@app.get("/api/tickets/{ticket_id}/summary")
-async def ticket_summary(ticket_id: int):
-    """Short summary of what each agent did on this ticket's most recent run (from the audit trail)."""
+@app.get("/api/tickets/{ticket_id}/runs")
+async def ticket_runs(ticket_id: int):
+    """Every finished run of this ticket in the audit trail, oldest first (the board's run picker)."""
     data = _audit()
-    ends = [e for e in data if e.get("ticket_id") == ticket_id and e.get("event") == "ticket_end"]
+    starts = {e["run_id"]: e["ts"] for e in data if e.get("ticket_id") == ticket_id and e.get("event") == "ticket_start"}
+    return {"ticket_id": ticket_id, "runs": [
+        {"run_id": e["run_id"], "started": starts.get(e["run_id"]), "ended": e["ts"],
+         "agent_runs": e.get("agent_runs"), "tokens_used": e.get("tokens_used"),
+         "decision": (e.get("decision") or {}).get("decision")}
+        for e in data if e.get("ticket_id") == ticket_id and e.get("event") == "ticket_end"]}
+
+
+@app.get("/api/tickets/{ticket_id}/summary")
+async def ticket_summary(ticket_id: int, run_id: str | None = None):
+    """Short summary of what each agent did on one run of this ticket (default: the most recent run)."""
+    data = _audit()
+    ends = [e for e in data if e.get("ticket_id") == ticket_id and e.get("event") == "ticket_end"
+            and (run_id is None or e.get("run_id") == run_id)]
     if not ends:
         return {"ticket_id": ticket_id, "has_run": False}
     run_id = ends[-1]["run_id"]

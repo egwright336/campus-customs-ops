@@ -110,3 +110,12 @@ export interface TicketSummary {
   tokens_used?: number
   agents?: AgentSummary[]
 }
+
+export interface RunInfo {
+  run_id: string
+  started: string | null
+  ended: string
+  agent_runs: number | null
+  tokens_used: number | null
+  decision: string | null
+}

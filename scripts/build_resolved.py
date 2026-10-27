@@ -75,7 +75,7 @@ for tid in (101, 102, 103):
         "cash": {"checking_before": before, "cash_out": out, "checking_after": bal},
     })
 
-end = con.execute("SELECT balance FROM cash_accounts WHERE name = 'checking'").fetchone()[0]
+end = END = con.execute("SELECT balance FROM cash_accounts WHERE name = 'checking'").fetchone()[0]
 assert abs(bal - end) < 0.005, (bal, end)
 doc = {"run": "Problem 9 full run (reset, then 101 -> 102 -> 103, human signing in the Night Desk after each)",
        "model": "gpt-6-luna via Portkey", "shop_today": con.execute("SELECT date_today FROM desk").fetchone()[0],
@@ -84,6 +84,18 @@ doc = {"run": "Problem 9 full run (reset, then 101 -> 102 -> 103, human signing 
 (ROOT / "output" / "resolved_tickets.json").write_text(json.dumps(doc, indent=1, ensure_ascii=False))
 
 # ---- resolved_board.html: screenshots embedded as data URIs, so the file works on its own
+def main_run_shot(tk: dict) -> str:
+    """For tickets that were re-run, also show the main run (picked with the board's run picker)."""
+    png = ROOT / "output" / "screenshots" / f"board_{tk['id']}_main_run.png"
+    if not png.exists():
+        return ""
+    data = base64.b64encode(png.read_bytes()).decode()
+    return (f"<p class='meta'>The screenshot above shows the latest run (an accidental dashboard re-run). Below is the "
+            f"<b>main run</b> ({A.RUNS[tk['id']]['main']}), opened with the board's run picker after the night ended, so "
+            f"its ledger already shows the final ${END:,.2f}.</p>"
+            f"<img src='data:image/png;base64,{data}' alt='Main run of ticket {tk['id']}'>")
+
+
 shots = ""
 for tk in tickets:
     png = ROOT / "output" / "screenshots" / f"board_{tk['id']}.png"
@@ -98,6 +110,7 @@ for tk in tickets:
  <p>{html.escape(tk['short_outcome'])}</p>
  <ul class="appr">{appr}</ul>
  <img src="data:image/png;base64,{data}" alt="Night Desk board for ticket {tk['id']} after it was resolved">
+ {main_run_shot(tk)}
 </section>"""
 
 page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

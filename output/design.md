@@ -21,6 +21,7 @@ is original.
 | Zone | What's there | Why |
 |---|---|---|
 | **Masthead** (midnight, crescent moon, bats, drifting fog) | Crest, "The Night Desk", the shop's *today* (`desk.date_today`, which is Monday, August 31, 2026), and **the Ledger**, the checking balance set in brass | The two facts every decision hangs on (what day the shop thinks it is, and how much cash there is) are always visible and never scroll away |
+| **Run picker** (under the ticket header) | One pill per run of the ticket (time, agents, tokens, "latest") | A re-run never hides the main run; the audit trail keeps them all, so the board shows them all |
 | **Left: the docket** | The 3 tickets as parchment notices pinned with a brass tack, slightly askew. Pills show status, how many requests wait for a signature, and how many letters were drafted. *House rules* and **Reset the books** sit below | It reads like a courthouse notice board. Picking a notice outlines it in lantern orange |
 | **Center: the case** | Ticket header with **Send the team in** → **the porch** (five agent "chairs") → **the telling** (live feed) → **What each one did** (after the run) | One ticket at a time, read top to bottom: who is here, what they are saying, what they did |
 | **Right: awaiting a signature** | A *Signed by ___* line, request slips with the amount stamped in Oswald, **Sign & pay** / **Turn down** buttons, and already-decided requests folded away. Below that, **Unsent letters** (drafts) | The human's job sits on its own side of the desk, separate from the agents' talk |
