@@ -308,3 +308,38 @@ One section per problem: the problem number and title, at least one prompt I typ
 ### Follow-up prompts
 
 > let's do them up to 7
+
+(I read "up to 7" as items 1–6. Item 7, changing the guard tools, would change agent behavior after the graded run, so it's held for a separate decision.)
+
+### What was built (evidence)
+
+1. **Fresh-install test, done the way a grader would:**
+   - `git clone` into a scratch folder outside iCloud, then `python3 -m venv .venv` and `pip install -r requirements-dev.txt` (Python 3.14), which installed cleanly.
+   - `pytest tests/` → 17 passed. `python reset_db.py` → checking $3,400, tickets 101/102/103 open.
+   - `uvicorn main:app` → `/api/health`, `/api/tickets`, `/api/cash` and `/api/tickets/103/runs` all OK.
+   - Starting a run with no `.env` fails fast with "PORTKEY_API_KEY is not set…", costing 0 tokens.
+   - `npm ci && npm run build` (`tsc -b` and `vite build`) → built.
+2. **Pinned `requirements.txt`** to the versions used in the graded run (fastmcp 4.1.4, mcp 2.3.0, pydantic-ai-slim 2.61.0, openai 3.39.0, fastapi 0.162.0, uvicorn 0.54.0, pydantic 2.14.1, python-dotenv 1.2.4). Added `requirements-dev.txt` (adds pytest).
+3. **`CLAUDE.md`:** replaced "Problem 4 in progress" with a "Where things stand" section (how to start things, reset before re-running, tests, repo URL).
+4. **README:** added a hero screenshot (`output/screenshots/night_desk.png`) and a Tests section.
+5. **`tests/test_safety.py`: 17 offline tests**, all passing, with no API key and no tokens. They cover:
+   - agents can't approve (5 name variants);
+   - payments need a human, and a request can't be paid twice;
+   - approved rent updates `payments` and `leases.next_due`;
+   - no negative balance, at both request time and pay time;
+   - duplicate requests are refused;
+   - a vendor with an unrequested unpaid invoice is blocked;
+   - a price below cost is refused;
+   - only the boss can resolve a ticket;
+   - "today" comes from `desk.date_today`;
+   - no agent gets the human-only tools;
+   - the model is `gpt-6-luna`.
+
+   Two first-draft tests were wrong, not the app: one used a vendor that was already blocked, the other a wrong field name.
+6. **Run picker:**
+   - New `GET /api/tickets/{id}/runs` and `GET /api/tickets/{id}/summary?run_id=`.
+   - The board shows one pill per run, plus a `&run=` deep link.
+   - `resolved_board.html` now also shows the **main** runs of 102 and 103 (`board_10x_main_run.png`), not only the accidental re-runs.
+   - Harness and design.md updated.
+- **Correction found while writing the tests:** `check_vendor_can_ship` *does* return invoice 501's description ("Rush reprint CC-TEE-WHITE S"). The reflection said the tool hid it. It now says inventory saw the description and ordered anyway, so the fix is to enforce the rule in the PO tool.
+- Pushed to https://github.com/egwright336/campus-customs-ops.
